@@ -1,2 +1,0 @@
-# ourjourneys
-plan you go
