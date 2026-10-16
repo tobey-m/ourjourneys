@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { background: #F9F8F6; color: #1e1e20; overflow-x: hidden; }
+.bento-card { background: #fff; border-radius: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,.02); border: 1px solid rgba(230,228,220,.6); transition: all .3s; }
+.bento-card:hover { box-shadow: 0 8px 24px rgba(224,90,71,.08); border-color: rgba(224,90,71,.2); }
+.coral-btn { background: #E05A47; color: #fff; transition: all .2s; }
+.coral-btn:hover { background: #cc4230; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { scrollbar-width: none; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid #E05A47; outline-offset: 2px; }
+
+@page { size: A4 landscape; margin: 8mm; }
+@media print {
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { background: #fff; }
+  .no-print { display: none !important; }
+  .bento-card { box-shadow: none; break-inside: avoid; }
+}
