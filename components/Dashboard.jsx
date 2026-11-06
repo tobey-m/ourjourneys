@@ -127,7 +127,7 @@ export default function Dashboard({ initial, shared }) {
   }
   async function openTrip(id) {
     const r = await fetch('/api/trips?id=' + id, { headers: await authed() }); const j = await r.json();
-    if (r.ok) { setS((s) => ({ ...DEF, ...j.state, checks: s.checks })); setTripId(id); setMine(null); } else setMsg(j.error || 'เปิดไม่สำเร็จ');
+    if (r.ok) { setS({ ...DEF, ...j.state, checks: j.state?.checks && typeof j.state.checks === 'object' && !Array.isArray(j.state.checks) ? j.state.checks : {} }); setTripId(id); setMine(null); } else setMsg(j.error || 'เปิดไม่สำเร็จ');
   }
   async function delTrip(id) {
     if (!confirm('ลบทริปนี้?')) return;
