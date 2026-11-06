@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 import { getDb } from '../../../lib/supabase';
 
-const PICK = ['name', 'tags', 'pax', 'sep', 'bud', 'start', 'end', 'active', 'sort', 'visa', 'custom'];
+const PICK = ['name', 'tags', 'pax', 'sep', 'bud', 'start', 'end', 'active', 'sort', 'visa', 'custom', 'checks'];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const err = (m, s) => Response.json({ error: m }, { status: s });
 
@@ -23,6 +23,7 @@ export async function POST(req) {
   const state = {};
   for (const k of PICK) if (k in s) state[k] = s[k];
   state.custom = Array.isArray(state.custom) ? state.custom.slice(0, 20) : [];
+  state.checks = state.checks && typeof state.checks === 'object' && !Array.isArray(state.checks) ? state.checks : {};
   state.name = String(state.name || '').slice(0, 80);
   state.tags = String(state.tags || '').slice(0, 120);
   if (JSON.stringify(state).length > 40000) return err('too large', 413);
@@ -32,7 +33,8 @@ export async function POST(req) {
   if (body.id) {
     if (!user) return err('ต้องเข้าสู่ระบบ', 401);
     if (!UUID.test(body.id)) return err('bad id', 400);
-    const { data } = await db.from('trips').update({ ...row, updated_at: new Date().toISOString() }).eq('id', body.id).eq('user_id', user.id).select('id').maybeSingle();
+    const { data, error } = await db.from('trips').update({ ...row, updated_at: new Date().toISOString() }).eq('id', body.id).eq('user_id', user.id).select('id').maybeSingle();
+    if (error) return err('อัปเดตทริปไม่สำเร็จ', 500);
     return data ? Response.json({ id: data.id }) : err('ไม่พบทริปนี้ในบัญชีของคุณ', 404);
   }
 
@@ -57,10 +59,12 @@ export async function GET(req) {
   const id = new URL(req.url).searchParams.get('id');
   if (id) {
     if (!UUID.test(id)) return err('bad id', 400);
-    const { data } = await db.from('trips').select('state').eq('id', id).eq('user_id', user.id).maybeSingle();
+    const { data, error } = await db.from('trips').select('state').eq('id', id).eq('user_id', user.id).maybeSingle();
+    if (error) return err('โหลดทริปไม่สำเร็จ', 500);
     return data ? Response.json({ state: data.state }) : err('ไม่พบทริป', 404);
   }
-  const { data } = await db.from('trips').select('id,name,tags,updated_at').eq('user_id', user.id).order('updated_at', { ascending: false }).limit(50);
+  const { data, error } = await db.from('trips').select('id,name,tags,updated_at').eq('user_id', user.id).order('updated_at', { ascending: false }).limit(50);
+  if (error) return err('โหลดรายการทริปไม่สำเร็จ', 500);
   return Response.json({ trips: data || [] });
 }
 
@@ -71,6 +75,8 @@ export async function DELETE(req) {
   const id = new URL(req.url).searchParams.get('id') || '';
   if (!user) return err('ต้องเข้าสู่ระบบ', 401);
   if (!UUID.test(id)) return err('bad id', 400);
-  await db.from('trips').delete().eq('id', id).eq('user_id', user.id);
+  const { data, error } = await db.from('trips').delete().eq('id', id).eq('user_id', user.id).select('id');
+  if (error) return err('ลบทริปไม่สำเร็จ', 500);
+  if (!data?.length) return err('ไม่พบทริปนี้ในบัญชีของคุณ', 404);
   return Response.json({ ok: true });
 }
