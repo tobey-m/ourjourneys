@@ -1,2 +1,3 @@
-import Dashboard from '../components/Dashboard';
-export default function Page() { return <Dashboard />; }
+import Link from 'next/link';
+import JourneyHome from '../components/JourneyHome';
+export default function Page() { return <JourneyHome />; }
